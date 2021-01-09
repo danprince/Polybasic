@@ -59,7 +59,7 @@ function getInitialContext(): Context {
     currentWordIndex: 0,
     optionWordIndexes: [],
     answerWordIndex: 0,
-    wordsPerRound: 3,
+    wordsPerRound: 20,
     streak: 0,
     answers: [],
   };
