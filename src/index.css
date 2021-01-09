@@ -1,3 +1,8 @@
+:root {
+  --color-primary: #1d6ade;
+  --color-streak: #ff6000;
+}
+
 body {
   font-family: system-ui;
   text-align: center;

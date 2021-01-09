@@ -15,10 +15,15 @@ export interface StateMachine<
   }
 }
 
+type Transition<State extends string, Context> = {
+  state: State,
+  context: Context,
+}
+
 type PassiveStateHandler<State extends string, Context> =
   (context: Context) => (
-    | { state: State, context: Context }
-    | Promise<{ state: State, context: Context }>
+    | Transition<State, Context>
+    | Promise<Transition<State, Context>>
   );
 
 type ActiveStateHandler<
@@ -30,8 +35,8 @@ type ActiveStateHandler<
     context: Context,
     event: Event & { type: T },
   ) => (
-    | { state: State, context: Context }
-    | Promise<{ state: State, context: Context }>
+    | Transition<State, Context>
+    | Promise<Transition<State, Context>>
   )
 }
 
@@ -63,9 +68,9 @@ export function useStateMachine<
     Promise
       // @ts-ignore : doesn't think currentState is callable
       .resolve(currentState(context))
-      .then(updates => {
+      .then((transition: Transition<State, Context>) => {
         if (cancelled) return;
-        update(updates);
+        update(transition);
       });
 
     return cancel;
@@ -79,8 +84,8 @@ export function useStateMachine<
     }
 
     let eventHandler = currentState[event.type];
-    let updates = await eventHandler(context, event);
-    update(updates);
+    let transition = await eventHandler(context, event);
+    update(transition);
   }
 
   return [state, transition, context];

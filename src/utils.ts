@@ -1,4 +1,4 @@
-import { useEffect } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
 
 export function useEventListener<
   Name extends keyof WindowEventMap
@@ -25,4 +25,23 @@ export function shuffle<T extends any[]>(array: T): T {
   }
 
   return array;
+}
+
+export function useAnimateOnChange(value: any, duration = 500) {
+  let [animating, setAnimating] = useState(false);
+  let valueRef = useRef(value);
+
+  useEffect(() => {
+    if (value !== valueRef.current && value > 0) {
+      setAnimating(true);
+      let timeout = setTimeout(() => setAnimating(false), duration);
+      return () => clearTimeout(timeout);
+    }
+  }, [value]);
+
+  return animating;
+}
+
+export function classNames(...classNames: (string | boolean | undefined | null)[]) {
+  return classNames.filter(name => name).join(" ");
 }

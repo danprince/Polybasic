@@ -5,7 +5,7 @@ import { StateMachine, useStateMachine } from "./useStateMachine";
 import { Spinner } from "./Spinner";
 import { Progress } from "./Progress";
 import { LanguageSelector } from "./LanguageSelector";
-import { useEventListener, delay, shuffle } from "./utils";
+import { useEventListener, useAnimateOnChange, classNames, delay, shuffle } from "./utils";
 import languages from "./languages";
 
 interface Answer {
@@ -19,11 +19,11 @@ export type State =
   | "select-language"
   | "load-words"
   | "error"
-  | "get-next-word"
+  | "pick-word"
   | "wait-for-answer"
   | "correct"
   | "incorrect"
-  | "skipped"
+  | "next-word"
   | "stats"
 
 export type Event =
@@ -31,7 +31,7 @@ export type Event =
   | { type: "load-words", sourceLanguageWords: string[], targetLanguageWords: string[] }
   | { type: "reset" }
   | { type: "submit-answer", wordIndex: number }
-  | { type: "skip-answer" }
+  | { type: "continue" }
 
 export type Context = {
   sourceLanguageId: string,
@@ -44,8 +44,25 @@ export type Context = {
   optionWordIndexes: number[],
   answerWordIndex: number,
 
+  wordsPerRound: number,
   streak: number,
   answers: Answer[],
+}
+
+function getInitialContext(): Context {
+  return {
+    sourceLanguageId: "en",
+    targetLanguageId: "",
+    sourceLanguageWords: [],
+    targetLanguageWords: [],
+    currentWordLanguage: "source",
+    currentWordIndex: 0,
+    optionWordIndexes: [],
+    answerWordIndex: 0,
+    wordsPerRound: 3,
+    streak: 0,
+    answers: [],
+  };
 }
 
 let stateMachine: StateMachine<State, Event, Context> = {
@@ -75,7 +92,7 @@ let stateMachine: StateMachine<State, Event, Context> = {
         ]);
 
         return {
-          state: "get-next-word",
+          state: "pick-word",
           context: {
             ...ctx,
             sourceLanguageWords,
@@ -100,7 +117,7 @@ let stateMachine: StateMachine<State, Event, Context> = {
       }
     },
 
-    "get-next-word": ctx => {
+    "pick-word": ctx => {
       let length = ctx.sourceLanguageWords.length;
       let index = Math.floor(Math.random() * length);
       let options = [index];
@@ -141,20 +158,13 @@ let stateMachine: StateMachine<State, Event, Context> = {
           },
         };
       },
-      "skip-answer"(ctx) {
-        return {
-          state: "skipped",
-          context: ctx,
-          streak: 0,
-        };
-      }
     },
 
     "incorrect": async context => {
       await delay(1500);
 
       return {
-        state: "get-next-word",
+        state: "next-word",
         context,
       };
     },
@@ -163,40 +173,38 @@ let stateMachine: StateMachine<State, Event, Context> = {
       await delay(1500);
 
       return {
-        state: "get-next-word",
+        state: "next-word",
         context,
       };
     },
 
-    "skipped": async context => {
-      await delay(1500);
-
-      return {
-        state: "get-next-word",
-        context,
-      };
+    "next-word"(ctx) {
+      if (ctx.answers.length > 0 && ctx.answers.length % ctx.wordsPerRound === 0) {
+        return {
+          state: "stats",
+          context: ctx,
+        };
+      } else {
+        return {
+          state: "pick-word",
+          context: ctx,
+        };
+      }
     },
 
     "stats": {
-
+      "continue"(ctx) {
+        return {
+          state: "pick-word",
+          context: {
+            ...ctx,
+            answers: []
+          },
+        };
+      }
     }
   }
 };
-
-function getInitialContext(): Context {
-  return {
-    sourceLanguageId: "en",
-    targetLanguageId: "",
-    sourceLanguageWords: [],
-    targetLanguageWords: [],
-    currentWordLanguage: "source",
-    currentWordIndex: 0,
-    optionWordIndexes: [],
-    answerWordIndex: 0,
-    streak: 0,
-    answers: [],
-  };
-}
 
 export let App: FunctionComponent = () => {
   let [state, transition, context] = useStateMachine(stateMachine);
@@ -211,7 +219,7 @@ export let App: FunctionComponent = () => {
           transition({ type: "reset" });
         }}
       >
-        polybasic
+        Polybasic
       </a>
       <a
         href=""
@@ -224,6 +232,7 @@ export let App: FunctionComponent = () => {
           <Spinner width={24} height={24} />
         ) : (
           <img
+            class="header-flag"
             width={24}
             height={24}
             src={`flags/${context.targetLanguageId}.svg`}
@@ -241,7 +250,7 @@ export let App: FunctionComponent = () => {
       view = (
         <>
           <div class="tagline">
-            Learn 90% of a language <a href="https://en.wikipedia.org/wiki/Basic_English" target="_blank">with 850 words.</a>
+            Learn 90% of a language with <br></br><a href="https://en.wikipedia.org/wiki/Basic_English" target="_blank">850 of the words</a>.
           </div>
           <LanguageSelector
             languages={languages.filter(language => {
@@ -256,15 +265,27 @@ export let App: FunctionComponent = () => {
       break;
     }
 
+    case "load-words": {
+      break;
+    }
+
     case "error": {
       view = (
         <>
           <h1>Something Went Wrong</h1>
         </>
       );
+      break;
     }
 
-    case "load-words": {
+    case "stats": {
+      view = (
+        <Stats
+          state={state}
+          context={context}
+          transition={transition}
+        />
+      );
       break;
     }
 
@@ -278,17 +299,55 @@ export let App: FunctionComponent = () => {
       );
 
       footer = (
-        <Progress value={context.answers.length / 20} />
+        <>
+          <Streak value={context.streak} />
+          <Progress
+            value={context.answers.length / context.wordsPerRound}
+          />
+          <GitHubLink />
+        </>
       );
     }
   }
 
   return (
-    <div class="app">
+    <div class={`app ${context.streak > 1 ? "app-streak" : ""}`}>
       <header class="app-header">{header}</header>
       <div class="app-view">{view}</div>
       <footer class="app-footer">{footer}</footer>
     </div>
+  );
+};
+
+let Streak: FunctionComponent<{ value: number }> = ({ value}) => {
+  let hasStreak = value > 1;
+  let animate = useAnimateOnChange(value) && hasStreak;
+
+  let className = classNames(
+    "streak",
+    hasStreak ? "streak-active" : "streak-inactive",
+    animate && "streak-pop"
+  );
+
+  return (
+    <div class={className} title="Streak">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-flame" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+        <path d="M12 12c2 -2.96 0 -7 -1 -8c0 3.038 -1.762 4.383 -2.989 5.642c-1.226 1.26 -2.011 2.598 -2.011 4.358a6 6 0 1 0 12 0c0 -1.532 -.77 -2.94 -1.714 -4c-1.786 3 -3.077 3 -4.286 2z" />
+      </svg>
+      {value}
+    </div>
+  )
+};
+
+let GitHubLink: FunctionComponent = () => {
+  return (
+    <a class="github-link" href="https://github.com/danprince/polybasic" target="_blank" title="GitHub">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+        <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+      </svg>
+    </a>
   );
 };
 
@@ -352,4 +411,40 @@ let Game: FunctionComponent<{
       </div>
     </div>
   );
+}
+
+let Stats: FunctionComponent<{
+  state: State,
+  context: Context,
+  transition: (event: Event) => Promise<any>,
+}> = ({
+  state,
+  context,
+  transition,
+}) => {
+  let correctAnswers = context.answers.filter(answer => {
+    return answer.actual === answer.expected;
+  });
+
+  let correctPercentage = correctAnswers.length / context.answers.length;
+
+  return (
+    <div class="stats">
+      <h2 class="stats-title">{getStatsMessage(correctPercentage)}</h2>
+      <p class="stats-description">You got <strong>{correctAnswers.length}</strong> answers correct!</p>
+      <button class="stats-continue" onClick={() => transition({ type: "continue" })}>Continue</button>
+    </div>
+  );
+};
+
+function getStatsMessage(score: number) {
+  if (score === 0) {
+    return "Uh oh...";
+  } else if (score < 0.5) {
+    return "Not bad";
+  } else if (score < 0.75) {
+    return "Good job";
+  } else {
+    return "Amazing";
+  }
 }

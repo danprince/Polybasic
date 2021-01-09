@@ -22,7 +22,7 @@ export let LanguageSelector: FunctionComponent<{
               height={80}
               src={`flags/${language.id}.svg`}
             />
-            <div>
+            <div class="language-selector-name">
               {language.name}
             </div>
           </button>

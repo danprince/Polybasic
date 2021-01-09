@@ -2,7 +2,7 @@
   max-width: 200px;
   width: 100%;
   margin: 0 auto;
-  position: relative;
+  overflow: hidden;
 }
 
 .progress-track {
@@ -10,12 +10,16 @@
   background: whitesmoke;
   border-radius: 20px;
   height: 8px;
-  overflow: hidden;
 }
 
 .progress-bar {
   height: 100%;
-  background: #1d6ade;
+  background: var(--color-primary);
   border-radius: 20px;
   transition: width 300ms;
+  position: relative;
+}
+
+.app-streak .progress-bar {
+  background: var(--color-streak);
 }
