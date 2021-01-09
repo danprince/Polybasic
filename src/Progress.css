@@ -14,7 +14,7 @@
 
 .progress-bar {
   height: 100%;
-  background: var(--color-primary);
+  background: #ccc;
   border-radius: 20px;
   transition: width 300ms;
   position: relative;
@@ -22,4 +22,8 @@
 
 .app-streak .progress-bar {
   background: var(--color-streak);
+}
+
+.app-streak .progress-track {
+  background: var(--color-streak-dim);
 }

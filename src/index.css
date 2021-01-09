@@ -1,6 +1,7 @@
 :root {
-  --color-primary: #1d6ade;
+  --color-primary: #00a637;
   --color-streak: #ff6000;
+  --color-streak-dim: #ffcfb1;
 }
 
 body {
