@@ -1,12 +1,28 @@
-import { h, useRef } from "./preact.js";
-import { useEventListener } from "./utils.js";
-import { useStateMachine } from "./use-state-machine.js";
+import { h } from "preact";
+import { useEventListener, delay, shuffle } from "./utils";
+import { StateMachine, useStateMachine } from "./use-state-machine";
+import type { LanguageType } from "./app";
 
+type GameState =
+  | "new-word"
+  | "waiting-for-answer"
+  | "correct"
+  | "incorrect"
+  | "skipped"
 
-/**
- * @type {StateMachine<GameState, GameEvent, GameContext>}
- */
-let gameStateMachine = {
+type GameEvent =
+  | { type: "show-word", index: number, language: LanguageType, options: number[] }
+  | { type: "submit-answer", index: number }
+  | { type: "skip-answer" }
+
+type GameContext = {
+  currentWordIndex: number,
+  currentWordLanguage: LanguageType,
+  optionWordIndexes: number[],
+  answerWordIndex: number,
+}
+
+let gameStateMachine: StateMachine<GameState, GameEvent, GameContext> = {
   initial: "new-word",
   context: {
     currentWordIndex: -1,
@@ -84,20 +100,18 @@ let gameStateMachine = {
   },
 };
 
-/**
- * @param {object} props
- * @param {string[]} props.sourceLanguageWords
- * @param {string[]} props.targetLanguageWords
- */
 export function Game({
   sourceLanguageWords,
   targetLanguageWords,
+}: {
+  sourceLanguageWords: string[],
+  targetLanguageWords: string[],
 }) {
   let [state, context, transition] = useStateMachine(gameStateMachine);
 
   useEventListener(window, "keydown", event => {
     if (event.key >= "0" && event.key <= "9") {
-      let buttons = document.querySelectorAll(".choice");
+      let buttons = document.querySelectorAll(".choice") as NodeListOf<HTMLButtonElement>;
       let index = parseInt(event.key) - 1;
       let button = buttons[index];
 
@@ -113,47 +127,40 @@ export function Game({
   }, []);
 
   return (
-    h("div", { class: `game ${state}` },
-      h("h1", { class: "game-word" }, (
-        context.currentWordLanguage === "source"
+    <div class={`game ${state}`}>
+      <h1 class="game-word">
+        {context.currentWordLanguage === "source"
           ? sourceLanguageWords[context.currentWordIndex]
-          : targetLanguageWords[context.currentWordIndex]
-      )),
-
-      h("div", { class: "choices" },
-        context.optionWordIndexes.map((wordIndex, index) => {
+          : targetLanguageWords[context.currentWordIndex]}
+      </h1>
+      <div class="choices">
+        {context.optionWordIndexes.map(wordIndex => {
           let isCorrect = wordIndex === context.currentWordIndex;
           let isAnswer = wordIndex === context.answerWordIndex;
+          let className = state === "waiting-for-answer"
+            ? `choice`
+            : `choice ${isCorrect ? "choice-correct" : "choice-incorrect"} ${isAnswer ? "choice-answer" : ""}`
 
-          return h("button", {
-            disabled: state !== "waiting-for-answer",
-
-            class: state === "waiting-for-answer"
-              ? `choice`
-              : `choice ${isCorrect ? "choice-correct" : "choice-incorrect"} ${isAnswer ? "choice-answer" : ""}`,
-
-            onClick() {
-              transition({ type: "submit-answer", index: wordIndex });
-            },
-
-            children: context.currentWordLanguage === "target"
-              ? sourceLanguageWords[wordIndex]
-              : targetLanguageWords[wordIndex]
-          });
-        }),
-      ),
-
-      h("button", {
-        class: "skip",
-        onClick() {
-          transition({ type: "skip-answer" });
-        }
-      }, "Skip"),
-    )
+          return (
+            <button
+              disabled={state !== "waiting-for-answer"}
+              class={className}
+              onClick={() => {
+                transition({ type: "submit-answer", index: wordIndex });
+              }}
+            >
+              {context.currentWordLanguage === "target"
+                ? sourceLanguageWords[wordIndex]
+                : targetLanguageWords[wordIndex]}
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
-function Progress({ value }) {
+function Progress({ value = 0 }) {
   return (
     h("div", { class: "progress" }, [
       h("div", { class: "progress-track" },
@@ -166,23 +173,3 @@ function Progress({ value }) {
   );
 }
 
-/**
- * @param {number} ms
- */
-function delay(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-/**
- * @template T
- * @param {T[]} array
- * @return {T[]}
- */
-function shuffle(array) {
-  for (let i = array.length - 1; i > 0; i--) {
-    let j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
-  }
-
-  return array;
-}

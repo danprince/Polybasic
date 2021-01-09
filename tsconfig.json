@@ -3,13 +3,11 @@
     "allowJs": true,
     "checkJs": true,
     "target": "esnext",
-    "noEmit": true,
     "moduleResolution": "node",
     "esModuleInterop": true,
-    "baseUrl": ".",
-    "paths": {
-      "https://cdn.skypack.dev/*": ["node_modules/*", "node_modules/@types/*"]
-    }
+    "jsx": "react",
+    "jsxFactory": "h",
+    "jsxFragmentFactory": "Fragment"
   },
   "include": ["src/**/*"]
 }
