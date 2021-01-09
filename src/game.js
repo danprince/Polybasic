@@ -1,5 +1,7 @@
-import { h } from "./preact.js";
+import { h, useRef } from "./preact.js";
+import { useEventListener } from "./utils.js";
 import { useStateMachine } from "./use-state-machine.js";
+
 
 /**
  * @type {StateMachine<GameState, GameEvent, GameContext>}
@@ -97,29 +99,43 @@ export function Game({
     ? sourceLanguageWords[context.currentWordIndex]
     : targetLanguageWords[context.currentWordIndex];
 
+  let buttonRefs = useRef([]);
+
+  useEventListener(window, "keydown", event => {
+    if (event.key >= "0" && event.key <= "9") {
+      let index = parseInt(event.key) - 1;
+      let button = buttonRefs.current[index];
+      if (button) button.focus();
+    }
+  }, []);
+
   return (
     h("div", { class: `game ${state}` },
       h("h1", { class: "game-word" }, currentWord),
 
       h("div", { class: "choices" },
-        context.optionWordIndexes.map(index => {
-          let isCorrect = index === context.currentWordIndex;
-          let isAnswer = index === context.answerWordIndex;
+        context.optionWordIndexes.map((wordIndex, index) => {
+          let isCorrect = wordIndex === context.currentWordIndex;
+          let isAnswer = wordIndex === context.answerWordIndex;
 
           return h("button", {
             disabled: state !== "waiting-for-answer",
+
+            ref(element) {
+              buttonRefs.current[index] = element;
+            },
 
             class: state === "waiting-for-answer"
               ? `choice`
               : `choice ${isCorrect ? "choice-correct" : "choice-incorrect"} ${isAnswer ? "choice-answer" : ""}`,
 
             onClick() {
-              transition({ type: "submit-answer", index });
+              transition({ type: "submit-answer", index: wordIndex });
             },
 
             children: context.currentWordLanguage === "target"
-              ? sourceLanguageWords[index]
-              : targetLanguageWords[index]
+              ? sourceLanguageWords[wordIndex]
+              : targetLanguageWords[wordIndex]
           });
         }),
       ),
