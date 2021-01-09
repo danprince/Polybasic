@@ -95,23 +95,30 @@ export function Game({
 }) {
   let [state, context, transition] = useStateMachine(gameStateMachine);
 
-  let currentWord = context.currentWordLanguage === "source"
-    ? sourceLanguageWords[context.currentWordIndex]
-    : targetLanguageWords[context.currentWordIndex];
-
-  let buttonRefs = useRef([]);
-
   useEventListener(window, "keydown", event => {
     if (event.key >= "0" && event.key <= "9") {
+      let buttons = document.querySelectorAll(".choice");
       let index = parseInt(event.key) - 1;
-      let button = buttonRefs.current[index];
-      if (button) button.focus();
+      let button = buttons[index];
+
+      if (button) {
+        if (document.activeElement !== button) {
+          button.focus();
+        } else {
+          let wordIndex = context.optionWordIndexes[index];
+          transition({ type: "submit-answer", index: wordIndex });
+        }
+      }
     }
   }, []);
 
   return (
     h("div", { class: `game ${state}` },
-      h("h1", { class: "game-word" }, currentWord),
+      h("h1", { class: "game-word" }, (
+        context.currentWordLanguage === "source"
+          ? sourceLanguageWords[context.currentWordIndex]
+          : targetLanguageWords[context.currentWordIndex]
+      )),
 
       h("div", { class: "choices" },
         context.optionWordIndexes.map((wordIndex, index) => {
@@ -120,10 +127,6 @@ export function Game({
 
           return h("button", {
             disabled: state !== "waiting-for-answer",
-
-            ref(element) {
-              buttonRefs.current[index] = element;
-            },
 
             class: state === "waiting-for-answer"
               ? `choice`
