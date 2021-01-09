@@ -5,8 +5,16 @@ import { StateMachine, useStateMachine } from "./useStateMachine";
 import { Spinner } from "./Spinner";
 import { Progress } from "./Progress";
 import { LanguageSelector } from "./LanguageSelector";
-import { useEventListener, useAnimateOnChange, classNames, delay, shuffle } from "./utils";
+import { Sounds, useEventListener, useAnimateOnChange, classNames, delay, shuffle } from "./utils";
 import languages from "./languages";
+
+let sounds = new Sounds("sounds.mp4", {
+  pop1: [0, 1],
+  pop2: [1.8, 2.8],
+  pop3: [3.9, 4.9],
+  pop4: [5.8, 6.8],
+  fall: [9.9, 10.9],
+});
 
 interface Answer {
   language: "source" | "target",
@@ -148,6 +156,20 @@ let stateMachine: StateMachine<State, Event, Context> = {
           time: Date.now(),
         };
 
+        if (!correct) {
+          if (ctx.streak > 1) {
+            sounds.play("fall");
+          } else {
+            sounds.play("pop1");
+          }
+        } else if (ctx.streak === 0) {
+          sounds.play("pop2");
+        } else if (ctx.streak === 1) {
+          sounds.play("pop3");
+        } else if (ctx.streak >= 2) {
+          sounds.play("pop4");
+        }
+
         return {
           state: correct ? "correct" : "incorrect",
           context: {
@@ -180,6 +202,8 @@ let stateMachine: StateMachine<State, Event, Context> = {
 
     "next-word"(ctx) {
       if (ctx.answers.length > 0 && ctx.answers.length % ctx.wordsPerRound === 0) {
+        sounds.play("pop4");
+
         return {
           state: "stats",
           context: ctx,

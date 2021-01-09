@@ -45,3 +45,24 @@ export function useAnimateOnChange(value: any, duration = 500) {
 export function classNames(...classNames: (string | boolean | undefined | null)[]) {
   return classNames.filter(name => name).join(" ");
 }
+
+interface Timestamps {
+  [key: string]: [number, number]
+}
+
+export class Sounds<T extends Timestamps> {
+  private audio: HTMLAudioElement;
+  private timestamps: T;
+
+  constructor(src: string, timestamps: T) {
+    this.audio = new Audio(src);
+    this.timestamps = timestamps;
+  }
+
+  play(name: keyof T) {
+    let [start, end] = this.timestamps[name];
+    this.audio.currentTime = start;
+    this.audio.play();
+    setTimeout(() => this.audio.pause(), (end - start) * 1000);
+  }
+}
