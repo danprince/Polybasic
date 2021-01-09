@@ -43,8 +43,8 @@ export function useStateMachine<
   machine: StateMachine<State, Event, Context>
 ): [
   State,
+  (event: Event) => Promise<void>,
   Context,
-  (event: Event) => Promise<void>
 ] {
   const [{ state, context }, update] = useState({
     state: machine.initial,
@@ -83,5 +83,5 @@ export function useStateMachine<
     update(updates);
   }
 
-  return [state, context, transition];
+  return [state, transition, context];
 }

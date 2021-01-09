@@ -1,0 +1,10 @@
+.language-selector-item {
+  border: 0;
+  background: none;
+}
+
+.language-selector-name {
+  font: inherit;
+  font-weight: bold;
+  font-size: 16pt;
+}

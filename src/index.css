@@ -1,0 +1,12 @@
+body {
+  font-family: system-ui;
+  text-align: center;
+  height: 100vh;
+  margin: 0;
+  display: flex;
+}
+
+#root {
+  display: flex;
+  flex: 1 1;
+}

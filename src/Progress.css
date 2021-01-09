@@ -1,0 +1,21 @@
+.progress {
+  max-width: 200px;
+  width: 100%;
+  margin: 0 auto;
+  position: relative;
+}
+
+.progress-track {
+  flex: 1 1;
+  background: whitesmoke;
+  border-radius: 20px;
+  height: 8px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  background: #1d6ade;
+  border-radius: 20px;
+  transition: width 300ms;
+}

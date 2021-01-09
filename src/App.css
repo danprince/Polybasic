@@ -1,0 +1,131 @@
+.app {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 16px;
+  min-height: 60px;
+}
+
+.app-footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 16px;
+  min-height: 60px;
+}
+
+.app-view {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.header-title {
+  color: black;
+  font-size: 12pt;
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.tagline {
+  font-size: 16pt;
+  margin: 32px 0;
+}
+
+.game-word {
+  text-transform: capitalize;
+}
+
+.choices {
+  display: flex;
+  justify-content: center;
+}
+
+.choice {
+  border: 0;
+  font: inherit;
+  font-weight: bold;
+  font-size: 15pt;
+  background: white;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  padding: 16px;
+  border-radius: 8px;
+  text-transform: capitalize;
+  margin: 8px;
+  transition: transform 300ms;
+  white-space: nowrap;
+}
+
+.waiting-for-answer .choice:hover {
+  transform: scale(1.05);
+}
+
+.choice-incorrect {
+  opacity: 0.2;
+}
+
+.choice-correct {
+  opacity: 1;
+}
+
+.choice-correct:not(.choice-answer) {
+  animation: 500ms pop;
+}
+
+.choice:disabled {
+  color: black;
+}
+
+.choice-correct.choice-answer {
+  color: #00a637;
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(1);
+  }
+
+  60% {
+    transform: scale(1.05);
+  }
+
+  80% {
+    transform: scale(0.99);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+.skip {
+  border: 0;
+  background: none;
+  font-weight: bold;
+  font-size: 14pt;
+  color: #aaa;
+  margin: 24px;
+}
+
+.skip:hover {
+  color: black;
+}
+
+@media (max-width: 500px) {
+  .choices {
+    flex-direction: column;
+  }
+}
