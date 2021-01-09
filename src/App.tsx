@@ -360,21 +360,32 @@ let Game: FunctionComponent<{
   context,
   transition,
 }) => {
-  let buttonsRef = useRef([]);
+  let buttonsRef = useRef<HTMLButtonElement[]>([]);
 
   useEventListener(window, "keydown", event => {
-    if (event.key < "0" || event.key > "9") return;
+    // Don't hijack any system shortcuts
+    if (event.metaKey) return;
 
-    let index = parseInt(event.key) - 1;
-    let button = buttonsRef.current[index];
+    let activeButtonIndex = buttonsRef.current.indexOf(
+      document.activeElement as HTMLButtonElement
+    );
 
-    if (button) {
-      if (document.activeElement !== button) {
-        button.focus();
-      } else {
-        let wordIndex = context.optionWordIndexes[index];
-        transition({ type: "submit-answer", wordIndex });
-      }
+    if (event.key >= "0" && event.key <= "9") {
+      let index = parseInt(event.key) - 1;
+      let button = buttonsRef.current[index];
+      if (button) button.focus();
+    }
+
+    if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+      if (activeButtonIndex <= 0) return;
+      let button = buttonsRef.current[activeButtonIndex - 1];
+      if (button) button.focus();
+    }
+
+    if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+      if (activeButtonIndex >= buttonsRef.current.length) return;
+      let button = buttonsRef.current[activeButtonIndex + 1];
+      if (button) button.focus();
     }
   }, []);
 
@@ -432,7 +443,13 @@ let Stats: FunctionComponent<{
     <div class="stats">
       <h2 class="stats-title">{getStatsMessage(correctPercentage)}</h2>
       <p class="stats-description">You got <strong>{correctAnswers.length}</strong> answers correct!</p>
-      <button class="stats-continue" onClick={() => transition({ type: "continue" })}>Continue</button>
+      <button
+        class="stats-continue"
+        onClick={() => transition({ type: "continue" })}
+        autofocus
+      >
+        Continue
+      </button>
     </div>
   );
 };
