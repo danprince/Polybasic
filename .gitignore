@@ -1,4 +1,9 @@
 *.log
-node_modules
 .DS_Store
+node_modules
+
+# wmr cache
 .cache
+
+# wmr builds
+dist
