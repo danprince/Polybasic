@@ -153,6 +153,19 @@ export function Game({
   );
 }
 
+function Progress({ value }) {
+  return (
+    h("div", { class: "progress" }, [
+      h("div", { class: "progress-track" },
+        h("div", {
+          class: "progress-bar",
+          style: { width: `${value * 100}%` },
+        })
+      )
+    ])
+  );
+}
+
 /**
  * @param {number} ms
  */
