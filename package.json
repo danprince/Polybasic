@@ -1,0 +1,10 @@
+{
+  "private": true,
+  "scripts": {
+    "typecheck": "tsc"
+  },
+  "devDependencies": {
+    "preact": "^10.5.9",
+    "typescript": "^4.1.3"
+  }
+}
